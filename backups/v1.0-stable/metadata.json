@@ -1,0 +1,6 @@
+{
+  "name": "JJK ResNet-50 Vision Studio",
+  "description": "PyTorch ResNet-50 neural network workbench and MAPPA Studio dataset curation suite for recognizing 28 major Jujutsu Kaisen sorcerers and cursed spirits.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
