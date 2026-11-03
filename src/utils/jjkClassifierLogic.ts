@@ -90,6 +90,7 @@ export interface RecognitionResult {
   };
   analysisSource: 'gemini-vision-hybrid' | 'resnet50-feature-kernel';
   visualReasoning: string;
+  apiError?: string;
 }
 
 export interface TrainingEpochPoint {

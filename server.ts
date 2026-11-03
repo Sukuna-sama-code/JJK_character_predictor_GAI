@@ -35,9 +35,10 @@ if (!fs.existsSync(IMAGE_PROXY_CACHE_DIR)) {
   fs.mkdirSync(IMAGE_PROXY_CACHE_DIR, { recursive: true });
 }
 
-function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey.trim() === '') {
+function getGeminiClient(overrideKey?: string): GoogleGenAI | null {
+  let apiKey = (overrideKey || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
+  apiKey = apiKey.replace(/^["']|["']$/g, '').trim();
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
     return null;
   }
   return new GoogleGenAI({ apiKey });
@@ -770,6 +771,7 @@ async function classifyChunkWithGemini(
   });
   parts.push({ text: DISAMBIGUATION_PROMPT });
 
+  let lastErrorMessage = '';
   for (const modelName of VISION_MODELS_PRIORITY) {
     try {
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -796,12 +798,16 @@ async function classifyChunkWithGemini(
         }));
       }
     } catch (_err) {
+      const msg = (_err as any)?.message || String(_err);
+      lastErrorMessage = msg;
+      console.error(`[Gemini Engine] Attempt on ${modelName} failed:`, msg);
       // Try next priority model
     }
   }
 
   return items.map((item) => ({
     matchedCharacterId: item.preferredCharacterId,
+    apiError: lastErrorMessage,
   }));
 }
 
@@ -853,11 +859,13 @@ app.post('/api/recognize', async (req, res) => {
     }
   }
 
-  const ai = getGeminiClient();
+  const clientKey = (req.headers['x-gemini-api-key'] as string) || req.body?.geminiApiKey;
+  const ai = getGeminiClient(clientKey);
   if (!ai || !imageBase64 || typeof imageBase64 !== 'string') {
     res.json({
       ...baselineResult,
       inferenceLatencyMs: Number((Date.now() - startTime + 11.4).toFixed(1)),
+      apiError: !ai ? 'No GEMINI_API_KEY detected on server or request' : undefined,
     });
     return;
   }
@@ -912,7 +920,8 @@ app.post('/api/recognize-batch', async (req, res) => {
     return;
   }
 
-  const ai = getGeminiClient();
+  const clientKey = (req.headers['x-gemini-api-key'] as string) || req.body?.geminiApiKey;
+  const ai = getGeminiClient(clientKey);
   const resultsMap = new Map<string, ReturnType<typeof scoreImageFeaturesAgainstRoster>>();
   const uncachedIndices: number[] = [];
 
@@ -971,7 +980,7 @@ app.post('/api/recognize-batch', async (req, res) => {
     });
   }
 
-  const preliminaryResults = items.map((item) => {
+  const preliminaryResults = items.map((item, idx) => {
     const verified = resultsMap.get(item.id);
     if (verified) {
       return { id: item.id, result: verified };
@@ -982,7 +991,18 @@ app.post('/api/recognize-batch', async (req, res) => {
       contrastRatio: Number(item.contrastRatio) || 0.76,
       preferredCharacterId: item.preferredCharacterId,
     });
-    return { id: item.id, result: fallback };
+    const batchErr = uncachedIndices.includes(idx)
+      ? !ai
+        ? 'No GEMINI_API_KEY set on server'
+        : 'Gemini API call failed (check quota/prepayment)'
+      : undefined;
+    return {
+      id: item.id,
+      result: {
+        ...fallback,
+        apiError: batchErr,
+      },
+    };
   });
 
   // Fast non-blocking frames lookup: return instantly if in memory cache, warm up in background
@@ -1022,6 +1042,20 @@ app.get('/api/health', (_req, res) => {
     service: 'jjk-vision-studio',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/api/config-status', (req, res) => {
+  const clientKey = (req.headers['x-gemini-api-key'] as string) || '';
+  const serverKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+  const effectiveKey = (clientKey || serverKey).trim().replace(/^["']|["']$/g, '');
+  const hasKey = effectiveKey.length > 8 && effectiveKey !== 'MY_GEMINI_API_KEY';
+  res.json({
+    hasKey,
+    source: clientKey ? 'client-header' : serverKey ? 'server-env' : 'none',
+    keyPrefix: hasKey ? `${effectiveKey.slice(0, 4)}...${effectiveKey.slice(-4)}` : 'none',
+    keyLength: effectiveKey.length,
+    nodeEnv: process.env.NODE_ENV,
   });
 });
 

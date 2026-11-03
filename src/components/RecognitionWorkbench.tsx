@@ -27,6 +27,7 @@ import {
   Sliders,
   RotateCcw,
   X,
+  Key,
 } from 'lucide-react';
 
 interface RecognitionWorkbenchProps {
@@ -147,6 +148,23 @@ export const RecognitionWorkbench: React.FC<RecognitionWorkbenchProps> = ({
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
   const [activeWikiFrameId, setActiveWikiFrameId] = useState<string | null>(null);
   const [presetWikiImageEl, setPresetWikiImageEl] = useState<HTMLImageElement | null>(null);
+
+  const [geminiApiKey, setGeminiApiKey] = useState(
+    () => localStorage.getItem('jjk_gemini_api_key') || ''
+  );
+  const [isKeySavedToast, setIsKeySavedToast] = useState(false);
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
+  const handleSaveApiKey = () => {
+    const clean = geminiApiKey.trim();
+    if (clean) {
+      localStorage.setItem('jjk_gemini_api_key', clean);
+    } else {
+      localStorage.removeItem('jjk_gemini_api_key');
+    }
+    setIsKeySavedToast(true);
+    setTimeout(() => setIsKeySavedToast(false), 2500);
+  };
 
   const [presetRecognitionResult, setPresetRecognitionResult] = useState<RecognitionResult>(() =>
     scoreImageFeaturesAgainstRoster({
@@ -580,9 +598,13 @@ export const RecognitionWorkbench: React.FC<RecognitionWorkbenchProps> = ({
         }
 
         try {
+          const effectiveKey = geminiApiKey.trim() || localStorage.getItem('jjk_gemini_api_key') || '';
           const response = await fetch('/api/recognize-batch', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(effectiveKey ? { 'x-gemini-api-key': effectiveKey } : {}),
+            },
             body: JSON.stringify({
               items: preparedItems.map(({ item, compactBase64, metrics, hintCharId }) => ({
                 id: item.id,
@@ -1051,6 +1073,51 @@ export const RecognitionWorkbench: React.FC<RecognitionWorkbenchProps> = ({
                 className="sr-only"
               />
             </label>
+
+            {/* Gemini Vision API Key Client Override Box */}
+            <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-lg space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowKeyInput((v) => !v)}
+                  className="flex items-center gap-1.5 font-medium text-slate-300 hover:text-cyan-400 transition-colors focus:outline-none"
+                >
+                  <Key className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>Gemini Vision API Key</span>
+                  <span className="text-[10px] text-slate-500 font-normal">
+                    {geminiApiKey ? '(Active in Browser)' : '(Click to Override)'}
+                  </span>
+                </button>
+                {isKeySavedToast && (
+                  <span className="text-emerald-400 text-[11px] font-medium">
+                    ✓ Key Saved!
+                  </span>
+                )}
+              </div>
+              {showKeyInput && (
+                <div className="space-y-1.5 pt-1 border-t border-slate-800/80">
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={geminiApiKey}
+                      onChange={(e) => setGeminiApiKey(e.target.value)}
+                      placeholder="Paste Gemini API Key (AIzaSy... or AQ...)"
+                      className="flex-1 min-w-0 px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded text-slate-200 font-mono focus:outline-none focus:border-cyan-400 placeholder:text-slate-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveApiKey}
+                      className="px-3 py-1.5 text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded transition-colors whitespace-nowrap shrink-0"
+                    >
+                      Save Key
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    Saved locally in your browser. Powers Gemini Vision directly on any browser or deployment.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Step 2: Built-In 64-Class JJK Wiki MAPPA Keyframe Presets */}
@@ -1432,9 +1499,9 @@ export const RecognitionWorkbench: React.FC<RecognitionWorkbenchProps> = ({
                 ) : (
                   <span
                     className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0"
-                    title="GEMINI_API_KEY is missing on server. Server is using color fallback."
+                    title={recognitionResult.apiError || 'Inference running in offline color fallback mode.'}
                   >
-                    ⚠️ Offline Fallback (No API Key)
+                    ⚠️ {recognitionResult.apiError ? 'API Quota/Error (Fallback)' : 'Offline Fallback (No Key)'}
                   </span>
                 )}
               </div>
