@@ -225,7 +225,11 @@ const RAW_WIKI_ROSTER_SEEDS: RawCharacterSeed[] = [
     sheets: [20, 32, 144, 22],
     paletteHex: ['#065F46', '#D97706', '#1E293B'],
     dominantHueDeg: 162,
-    visualDescriptors: ['Dark pine-green hair tied in high ponytail', 'Rectangular purple-tinted cursed-spirit glasses', 'Naginata / three-section staff Playful Cloud'],
+    visualDescriptors: [
+      'Dark pine-green hair tied in high ponytail with rectangular cursed glasses',
+      'Post-Shibuya / Culling Game short messy dark hair with facial, neck & arm burn scars',
+      'Dark high-collar uniform, trench coat & Split Soul Katana / Playful Cloud',
+    ],
     f1: 0.975,
     confusionPairId: 'mai_zenin',
   },

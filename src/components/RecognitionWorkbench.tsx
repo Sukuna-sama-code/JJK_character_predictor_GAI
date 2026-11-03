@@ -516,49 +516,20 @@ export const RecognitionWorkbench: React.FC<RecognitionWorkbenchProps> = ({
             dataUrl: '',
           };
 
-          // Preserve native aspect ratio up to 448px for fast vision processing;
-          // for ultra-tall full-body character sheets (height > 1.75x width), include an aspect-preserved forehead/face zoom inset
+          // Clean aspect-ratio preserving scaling up to 640px max dimension for optimal vision fidelity
+          // (avoids artificial collage/split artifacts that confuse vision models on full-body or manga crops)
           const compactCanvas = document.createElement('canvas');
-          if (natH > natW * 1.75) {
-            compactCanvas.width = 448;
-            compactCanvas.height = 320;
-            const cCtx = compactCanvas.getContext('2d');
-            if (cCtx) {
-              cCtx.fillStyle = '#0B0E17';
-              cCtx.fillRect(0, 0, 448, 320);
-              const fullScale = Math.min(210 / natW, 320 / natH);
-              const fw = Math.round(natW * fullScale);
-              const fh = Math.round(natH * fullScale);
-              cCtx.drawImage(imgEl, Math.round((210 - fw) / 2), Math.round((320 - fh) / 2), fw, fh);
-              const cropW = Math.round(natW * 0.76);
-              const cropH = Math.round(natH * 0.34);
-              const cropX = Math.round((natW - cropW) / 2);
-              const zoomScale = Math.min(220 / cropW, 300 / cropH);
-              const zw = Math.round(cropW * zoomScale);
-              const zh = Math.round(cropH * zoomScale);
-              cCtx.drawImage(
-                imgEl,
-                cropX,
-                0,
-                cropW,
-                cropH,
-                224 + Math.round((220 - zw) / 2),
-                Math.round((320 - zh) / 2),
-                zw,
-                zh
-              );
-            }
-          } else {
-            const maxDim = 448;
-            const scale = Math.min(1, maxDim / Math.max(natW, natH));
-            compactCanvas.width = Math.max(128, Math.round(natW * scale));
-            compactCanvas.height = Math.max(128, Math.round(natH * scale));
-            const cCtx = compactCanvas.getContext('2d');
-            if (cCtx) {
-              cCtx.drawImage(imgEl, 0, 0, compactCanvas.width, compactCanvas.height);
-            }
+          const maxDim = 640;
+          const scale = Math.min(1, maxDim / Math.max(natW, natH));
+          compactCanvas.width = Math.max(128, Math.round(natW * scale));
+          compactCanvas.height = Math.max(128, Math.round(natH * scale));
+          const cCtx = compactCanvas.getContext('2d');
+          if (cCtx) {
+            cCtx.imageSmoothingEnabled = true;
+            cCtx.imageSmoothingQuality = 'high';
+            cCtx.drawImage(imgEl, 0, 0, compactCanvas.width, compactCanvas.height);
           }
-          const compactBase64 = compactCanvas.toDataURL('image/jpeg', 0.82);
+          const compactBase64 = compactCanvas.toDataURL('image/jpeg', 0.88);
 
           const hintCharId = matchCharacterIdFromHint(file.name);
           const initialResult = scoreImageFeaturesAgainstRoster({

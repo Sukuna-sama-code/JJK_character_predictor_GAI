@@ -615,10 +615,10 @@ const ROSTER_SLUGS_LIST = JJK_MAPPA_ROSTER.map(
 ).join(', ');
 
 const VISION_MODELS_PRIORITY = [
-  'gemini-3.5-flash',
-  'gemini-3.6-flash',
   'gemini-flash-lite-latest',
   'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
   'gemini-3.8-flash',
 ];
 
@@ -648,33 +648,50 @@ function resolveCharacterFromPredictedId(rawId?: string) {
 }
 
 const DISAMBIGUATION_PROMPT = `Identify the exact Jujutsu Kaisen character ID for each numbered image from the ${JJK_MAPPA_ROSTER.length}-character roster below.
-NOTE ON FANART, HALF-IMAGES, FACE CLOSE-UPS, MULTI-ANGLE ANIME FRAMES & MANGA PANELS:
-- Inputs may be OFFICIAL MAPPA ANIME FRAMES, BASIC OR STYLIZED 2D FANART (digital paintings, Twitter/Pixiv illustrations, anime fanart, sketches, chibi, or manga panel colorings), HALF-IMAGES (waist-up / bust crops, upper-half or lower-half crops, OR vertically split left-half / right-half character images where only 50% of the face/body is visible), tight FACE / EYE CLOSE-UPS, DIFFERENT ANGLES (side profile, 3/4 view, low/high angle, action motion cuts), OR Gege Akutami JJK MANGA panels (black-and-white monochrome ink or colored manga art).
-- For FANART images: Ignore artist-specific lighting, background colors, or stylized shading; identify the character by structural character invariants (hairstyle & hair color/braids/buns, facial markings/stitches/scars/tattoos, eyewear/goggles, signature outfit collar, cursed tools, or shikigami).
+NOTE ON UNTRAINED DATA: FANART, MANGA PANELS, CROPS, HALF-IMAGES, AND CASUAL ART:
+- Inputs may be RAW GEGE AKUTAMI MANGA PANELS (black-and-white ink scans, screentone shading, action lines), STYLIZED 2D FANART (digital illustrations, Twitter/Pixiv fanart, chibi, sketches, colored manga spreads), CROPPED/HALF-IMAGES (face/eye close-ups, waist-up crops, battle damage), or ALTERNATE COSTUMES (civilian streetwear, gym clothes, damaged clothes).
+- For MONOCHROME / MANGA PANELS: Do NOT rely on color cues. Rely 100% on structural line-art invariants: hair silhouette, parting, bangs, facial markings/tattoos/scars, eye geometry, earrings/piercings, collar cut, and signature cursed weapons.
+- For FANART: Ignore artist-specific color saturation or dramatic lighting; look for signature permanent traits.
 
 CRITICAL DISAMBIGUATION RULES:
-1. kenjaku (Kenjaku / Pseudo-Geto) vs suguru_geto (Suguru Geto) vs noritoshi_kamo vs choso:
+1. ryomen_sukuna (Ryomen Sukuna) vs yuji_itadori (Yuji Itadori):
+   - ryomen_sukuna: ALWAYS identified by BLACK CURSED TATTOOS/MARKINGS across his face (lines across forehead, bridge of nose, cheeks, chin, and dark eye circles), second pair of eyes/slits open beneath normal eyes, sinister/confident smirk, white kimono robe or Megumi's possessed body / Heian 4-armed form. (CRITICAL: Any facial tattoos or black markings -> ALWAYS ryomen_sukuna, NEVER yuji_itadori!).
+   - yuji_itadori: Clean face without tattoos (only tiny dormant half-moon slits under eyes), pink spiky hair with dark undercut, high school uniform with prominent RED HOODED COLLAR, athletic friendly/determined expression.
+2. kenjaku (Kenjaku / Pseudo-Geto) vs suguru_geto (Suguru Geto) vs noritoshi_kamo vs choso:
    - kenjaku: ALWAYS has a HORIZONTAL STITCH SCAR running across the middle of his forehead (or open skull cap with brain). In Geto's body with forehead stitches -> ALWAYS kenjaku (NEVER suguru_geto!).
    - suguru_geto: Long black hair tied in a top half-bun with curved bang over forehead, LARGE BLACK EAR GAUGE plugs, and SMOOTH UNSCARRED FOREHEAD (ZERO forehead stitches).
    - noritoshi_kamo: Short/medium dark hair with TWO SIDE LOCKS WRAPPED IN CLOTH bands in front of ears, squinting eyes, archery bow/blood arrows. NO ear gauges, NO forehead stitches.
    - choso: TWO HIGH SYMMETRICAL TWIN-TAIL DARK HAIR BUNS sticking out left and right, horizontal dark blood mark across bridge of nose, purple/white scarf tunic.
-2. aoi_todo (Aoi Todo) vs suguru_geto vs toji_fushiguro vs yuji_itadori:
+3. maki_zenin (Maki Zenin - Post-Shibuya / Culling Game) vs aoi_todo (Aoi Todo) vs toji_fushiguro vs mai_zenin:
+   - maki_zenin: Female sorcerer. Has TWO distinct appearances: (1) Season 1/2: long dark pine-green hair tied in high ponytail with rectangular cursed glasses and polearm/spear. (2) Post-Shibuya Incident & Culling Game: SHORT CHOPPED MESSY DARK HAIR (NO ponytail, NO glasses), EXTENSIVE FIRE BURN SCARS across her right face, right cheek, neck, collarbone, and right arm (from Jogo's flames), dark sleeveless high-collar top or dark Zenin clan coat, wields Split Soul Katana / Dragon Bone sword. CRITICAL: A female character with short dark hair, heavy facial/neck burn scars, and katana is ALWAYS maki_zenin (NEVER aoi_todo, NEVER mai_zenin, NEVER toji_fushiguro!).
    - aoi_todo: Muscular sorcerer with dark spiky hair tied in a high bun / topknot, a PROMINENT JAGGED VERTICAL SCAR running down the left side of his face across his left eye/cheek, and bare muscular upper body or dark high-collar Jujutsu uniform (Boogie Woogie clapping pose). (CRITICAL: Muscular man with face scar through left eye and top bun hair is ALWAYS aoi_todo!).
    - toji_fushiguro: Short straight black hair, small horizontal lip/corner-of-mouth scar, tight black t-shirt or baggy cream trousers, muscular build, cursed inventory worm.
-3. mei_mei (Mei Mei) vs mahito (Mahito) vs kasumi_miwa (Kasumi Miwa) — ESPECIALLY IN FANART:
-   - mei_mei: Adult female Grade 1 sorcerer with long pale icy-blue / silver-lavender / platinum hair. In official anime frames she wears TWO THICK BRAIDS with a front braid hanging straight down over her nose/face; in FANART & casual illustrations her front braid is often swept to the side/shoulder so her golden-amber eyes, long eyelashes, and red/crimson lipstick are visible! She has SMOOTH UNSCARRED SKIN (ZERO stitches on her face, nose, or neck), a curvy female figure in a dark high-collar dress/uniform or suit, and often wields an oversized battle axe or black crows.
-   - mahito: Male humanoid Special Grade Cursed Spirit who ALWAYS has PROMINENT PATCHWORK SURGICAL STITCHES / SEAMS running across his face (horizontal seam across nose bridge/cheeks), neck, and body, heterochromia eyes (one dark blue, one grey/gold), and messy unbraided silver-blue/grey hair. CRITICAL: If a silver/blue-haired character is female, has red lips, braids, or an axe, and has NO patchwork stitches on the face/neck, ALWAYS classify as mei_mei (NEVER mahito!).
+4. satoru_gojo (Satoru Gojo) vs yuta_okkotsu vs toge_inumaki:
+   - satoru_gojo: Tall sorcerer with bright SNOW-WHITE HAIR. Identified by: black fabric blindfold, dark round glasses/sunglasses, OR UNCOVERED VIBRANT LUMINOUS SIX EYES (cyan-teal crystalline irises with white eyelashes). Dark high-neck buttoned jacket or black short-sleeve fitted shirt.
+   - yuta_okkotsu: Messy dark/black hair parted to the side, loose white Jujutsu High zip jacket, dark rings/shadows under eyes, sword bag across chest, accompanied by Rika.
+   - toge_inumaki: Platinum/ash-cream hair, HIGH ZIPPED COLLAR completely covering lower face and mouth, Snake & Fangs sigils tattooed around mouth/tongue.
+5. kento_nanami (Kento Nanami) vs naobito_zenin vs naoya_zenin:
+   - kento_nanami: Blonde hair parted cleanly 7:3, SPOTTED WRAPPED GOGGLES/GLASSES (no temples, rests on nose), tailored beige suit, blue dress shirt, yellow dotted tie, blunt cleaver blade wrapped in spotted cloth.
+   - naobito_zenin: Elderly Zenin leader with long white handlebar mustache, traditional kimono haori, drinking gourd.
+   - naoya_zenin: Bleached-blonde hair with dark undercut, cocky smirk, pierced ears, traditional haori coat over white shirt.
+6. utahime_iori (Utahime Iori) vs shoko_ieiri vs nobara_kugisaki:
+   - utahime_iori: Large horizontal scar across bridge of nose and right cheek, long dark purple-black hair tied with white bow ribbon, white and red miko priestess shrine maiden robes.
+   - shoko_ieiri: Shoulder-length brown hair, distinct beauty mark/mole under right eye, white medical doctor coat, smoking cigarette.
+   - nobara_kugisaki: Auburn/orange bob haircut, steel hammer and nails, straw doll props.
+7. mei_mei (Mei Mei) vs mahito (Mahito) vs kasumi_miwa (Kasumi Miwa):
+   - mei_mei: Adult female Grade 1 sorcerer with long pale icy-blue / silver-lavender hair, thick front braid, golden-amber eyes, crimson lipstick, dark high-collar dress/suit, battle axe or crows. NO patchwork stitches.
+   - mahito: Male humanoid Special Grade Cursed Spirit who ALWAYS has PROMINENT PATCHWORK SURGICAL STITCHES / SEAMS running across his face (horizontal seam across nose bridge/cheeks), neck, and body, heterochromia eyes (one dark blue, one grey/gold), and messy unbraided silver-blue/grey hair.
    - kasumi_miwa: Teenage Kyoto girl with straight cyan/aqua hair and diagonal forehead bangs, wearing a dark pantsuit and holding a katana sword.
-4. yuki_tsukumo (Yuki Tsukumo) vs mei_mei vs larue vs toji_fushiguro vs takada_chan vs hana_kurusu:
-   - yuki_tsukumo: Special Grade female sorcerer with long golden-blonde hair parted with loose bangs framing her face (NO halo/wings, NO braid over nose). Wearing BROWN AVIATOR/MOTORCYCLE GOGGLES on forehead, or black leather biker jacket / dark sleeveless high-neck top exposing bare shoulders & arms, accompanied by Garuda serpent shikigami.
-5. SEASON 3: CULLING GAME & REINCARNATED SORCERERS:
+8. yuki_tsukumo (Yuki Tsukumo) vs hana_kurusu:
+   - yuki_tsukumo: Special Grade female sorcerer with long golden-blonde hair parted with loose bangs framing her face. Wearing brown aviator/motorcycle goggles on forehead, or black leather biker jacket / dark sleeveless high-neck top exposing bare shoulders & arms, accompanied by Garuda serpent shikigami.
+   - hana_kurusu: Blonde hair with floating ANGEL RING HALO and white feathered angel wings.
+9. SEASON 3: CULLING GAME & REINCARNATED SORCERERS:
    - kinji_hakari: Undercut spiky afro-dreadlock hair, chin stubble, fur coat or unzipped jacket, pachinko aura.
    - kirara_hoshi: Black hair with BRIGHT TEAL/CYAN FRONT HIGHLIGHT STREAK, 3 lip piercings, off-the-shoulder crop top, gold star belt buckle.
    - hiromi_higuruma: Exhausted defense attorney in pinstripe business suit, necktie, hooked nose, courtroom gavel or glowing Executioner's Sword + Judgeman shikigami.
    - fumihiko_takaba: Comedian in 50/50 vertically split costume (half naked chest, half tuxedo).
    - hajime_kashimo: Cyan/ice-blue hair in TWO ROUND HIGH BUNS with lightning-bolt side bangs, metal staff, crackling electricity.
    - yorozu: Tsumiki Fushiguro school uniform with navy blazer + red tie + small top bun, or Heian form with liquid metal / insect armor.
-   - hana_kurusu: Blonde hair with floating ANGEL RING HALO and white feathered angel wings.
    - ryu_ishigori: Cannon-barrel black regent pompadour on forehead, open fur coat.
    - takako_uro: Jet-black sclera eyes, Sky Manipulation glass distorting around body.
    - reggie_star: Outfit made of hanging paper receipts/contracts.
@@ -999,17 +1016,40 @@ app.post('/api/recognize-batch', async (req, res) => {
   res.json({ results: finalResults });
 });
 
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'jjk-vision-studio',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
 
   const distPath = path.resolve(__dirname, 'dist');
-  const isProduction =
-    process.env.NODE_ENV === 'production' || fs.existsSync(path.join(distPath, 'index.html'));
+  let hasDist = fs.existsSync(path.join(distPath, 'index.html'));
 
-  if (isProduction) {
+  if (!hasDist && process.env.NODE_ENV === 'production') {
+    console.log('Production mode detected but dist/index.html missing. Building client...');
+    try {
+      const { execSync } = await import('child_process');
+      execSync('npx vite build', { stdio: 'inherit' });
+      hasDist = fs.existsSync(path.join(distPath, 'index.html'));
+    } catch (e) {
+      console.error('Auto build failed:', e);
+    }
+  }
+
+  if (hasDist) {
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (fs.existsSync(path.join(distPath, 'index.html'))) {
+        res.sendFile(path.join(distPath, 'index.html'));
+      } else {
+        res.status(200).send(`<!DOCTYPE html><html><head><title>JJK Vision Studio</title></head><body>Loading JJK Vision Studio...</body></html>`);
+      }
     });
   } else {
     const { createServer: createViteServer } = await import('vite');
