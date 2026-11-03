@@ -1423,7 +1423,21 @@ export const RecognitionWorkbench: React.FC<RecognitionWorkbenchProps> = ({
           {/* Top-1 Classification Result */}
           <div className="space-y-3 pb-4 border-b border-slate-800">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-              <span>TOP-1 PREDICTED CLASS (OF {JJK_MAPPA_ROSTER.length})</span>
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <span className="truncate">TOP-1 PREDICTED CLASS (OF {JJK_MAPPA_ROSTER.length})</span>
+                {recognitionResult.analysisSource === 'gemini-vision-hybrid' ? (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                    ⚡ Gemini Vision Active
+                  </span>
+                ) : (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0"
+                    title="GEMINI_API_KEY is missing on server. Server is using color fallback."
+                  >
+                    ⚠️ Offline Fallback (No API Key)
+                  </span>
+                )}
+              </div>
               <span className="font-mono text-emerald-400 flex items-center gap-1 tabular-nums shrink-0">
                 {activeBatchItem?.status === 'analyzing-vision' ? (
                   <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
