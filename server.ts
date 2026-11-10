@@ -697,6 +697,7 @@ CRITICAL DISAMBIGUATION RULES:
    - takako_uro: Jet-black sclera eyes, Sky Manipulation glass distorting around body.
    - reggie_star: Outfit made of hanging paper receipts/contracts.
    - remi: Hair in 5 spherical ball-buns shaped like a scorpion tail with curved stinger tip.
+   - kurourushi: Giant humanoid cockroach Cursed Spirit from Sendai Colony, dark chitinous insect exoskeleton, bulbous red compound eyes, segmented limbs, wielding the meat-cleaver-like Festering Life Sword with six biological insect egg pods.
 
 ROSTER (match to exact ID):
 ${ROSTER_SLUGS_LIST}`;
